@@ -21,7 +21,7 @@ let episodes = [
   },
   {
     id: 2,
-    title: "Выпуск 2: Все о Node.js и Express",
+    title: "Выпуск 2: Пока не поздно",
     podcastName: "IT Шум",
     durationMinutes: 60,
     audioUrl: "https://example.com/audio/ep2.mp3",
