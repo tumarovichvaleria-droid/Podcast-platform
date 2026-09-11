@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+
+<div class="card">
+  <h1><%= episode.title %></h1>
+  <p><strong>Подкаст:</strong> <%= episode.podcastName %></p>
+  <p><strong>Длительность:</strong> <%= episode.durationMinutes %> минут</p>
+  <p><strong>Описание:</strong> <%= episode.description %></p>
+
+  <h3>Аудиоплеер:</h3>
+  <audio controls src="<%= episode.audioUrl %>" style="width: 100%; margin-bottom: 15px;"></audio>
+
+  <div>
+    <a href="/<%= user.isAuthenticated ? '?auth=1' : '' %>" class="btn">Назад к списку</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

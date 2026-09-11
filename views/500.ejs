@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+
+<div class="card" style="text-align: center; padding: 40px;">
+  <h1 style="font-size: 3em; color: #dc3545;">500</h1>
+  <h2>Внутренняя ошибка сервера</h2>
+  <p>Произошел сбой при обработке вашего запроса.</p>
+  <% if (locals.error) { %>
+    <p><code>Детали: <%= error %></code></p>
+  <% } %>
+  <a href="/" class="btn">Вернуться на главную</a>
+</div>
+
+<%- include('partials/footer') %>

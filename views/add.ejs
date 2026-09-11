@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+
+<h1>Добавление нового эпизода</h1>
+
+<% if (locals.error) { %>
+  <div class="error"><%= error %></div>
+<% } %>
+
+<form action="/add?auth=1" method="POST" class="card">
+  <div>
+    <label for="title">Название выпуска*:</label>
+    <input type="text" id="title" name="title" required>
+  </div>
+  <div>
+    <label for="podcastName">Название подкаста*:</label>
+    <input type="text" id="podcastName" name="podcastName" required>
+  </div>
+  <div>
+    <label for="durationMinutes">Длительность (в минутах)*:</label>
+    <input type="number" id="durationMinutes" name="durationMinutes" required>
+  </div>
+  <div>
+    <label for="audioUrl">Ссылка на аудиофайл (MP3)*:</label>
+    <input type="text" id="audioUrl" name="audioUrl" placeholder="https://example.com/audio.mp3" required>
+  </div>
+  <div>
+    <label for="description">Описание:</label>
+    <textarea id="description" name="description" rows="4"></textarea>
+  </div>
+  <button type="submit" class="btn">Опубликовать эпизод</button>
+</form>
+
+<%- include('partials/footer') %>

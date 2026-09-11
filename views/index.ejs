@@ -1,0 +1,51 @@
+<%- include('partials/header') %>
+
+<main class="container" style="margin-top: 20px;">
+  <h1>Каталог эпизодов подкастов</h1>
+
+  <% if (episodes.length === 0) { %>
+    <p>Список эпизодов пуст.</p>
+  <% } else { %>
+    <% episodes.forEach(episode => { %>
+      <div class="card" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h2><%= episode.title %></h2>
+        <p>
+          <strong>Подкаст:</strong> <%= episode.podcastName %> | 
+          <strong>Длительность:</strong> <%= episode.durationMinutes %> мин.
+        </p>
+        <p><%= episode.description %></p>
+
+        <!-- Блок кнопок: Play слева, Три точки справа -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+          <!-- Иконка Play (Запуск плеера) -->
+          <button class="play-btn" data-id="<%= episode.id %>" style="background: #007bff; color: white; border: none; padding: 10px 18px; border-radius: 50%; cursor: pointer; font-size: 16px;">
+            ▶
+          </button>
+
+          <!-- Три точки (Подробнее) -->
+          <a href="/item/<%= episode.id %>" style="color: #6c757d; text-decoration: none; font-size: 24px; font-weight: bold; padding: 0 10px;" title="Подробнее">
+            &#8942;
+          </a>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</main>
+
+<!-- Скрипт обработки нажатия на кнопку Play -->
+<script>
+  document.querySelectorAll('.play-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch(`/episodes/${id}/listen`, { method: 'POST' });
+        const data = await res.json();
+        alert(`Воспроизведение начато! Всего прослушиваний: ${data.playsCount}`);
+      } catch (err) {
+        console.error('Ошибка при воспроизведении:', err);
+      }
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>
