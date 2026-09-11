@@ -1,180 +1,343 @@
-const express = require('express');
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
+
+// Импортируем модели Sequelize
+const { Episode, Subscription, sequelize } = require("./models");
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const logFilePath = path.join(__dirname, "server.log");
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Настройка шаблонизатора EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-// Middleware для парсинга JSON в теле запроса
+// Встроенные middleware
 app.use(express.json());
-
-// Временная база данных в памяти сервера
-let episodes = [
-  {
-    id: 1,
-    title: "Выпуск 1: Введение в Web-разработку",
-    podcastName: "IT Шум",
-    durationMinutes: 45,
-    audioUrl: "https://example.com/audio/ep1.mp3",
-    playsCount: 150
-  },
-  {
-    id: 2,
-    title: "Выпуск 2: Пока не поздно",
-    podcastName: "IT Шум",
-    durationMinutes: 60,
-    audioUrl: "https://example.com/audio/ep2.mp3",
-    playsCount: 89
-  }
-];
-
-let subscriptions = [
-  { id: 1, podcastName: "IT Шум", subscribedAt: "2026-03-01T10:00:00Z" }
-];
-
-let nextEpisodeId = 3;
-let nextSubscriptionId = 2;
+app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// МАРШРУТЫ ДЛЯ ЭПИЗОДОВ (EPISODES)
+// КАСТОМНЫЕ MIDDLEWARE
 // ==========================================
 
-// GET /episodes — Получение списка всех эпизодов 
-app.get('/episodes', (req, res) => {
-  res.json(episodes);
+// 1. Логирующее middleware
+app.use((req, res, next) => {
+  const now = new Date().toISOString();
+  const eventType = "REQUEST";
+  const logMessage = `[${now}] [${eventType}] ${req.method} ${req.url}\n`;
+
+  fs.appendFile(logFilePath, logMessage, "utf8", (err) => {
+    if (err) console.error("Ошибка при записи лога:", err);
+  });
+
+  console.log(logMessage.trim());
+  next();
 });
 
-// GET /episodes/:id — Получение одного эпизода по ID
-app.get('/episodes/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const episode = episodes.find(ep => ep.id === id);
-
-  if (!episode) {
-    return res.status(404).json({ error: "Эпизод с указанным ID не найден" });
+// 2. Middleware авторизации
+app.use((req, res, next) => {
+  if (req.query.auth === "1") {
+    req.user = { name: "Администратор", role: "admin" };
+    next();
+  } else {
+    req.user = { name: "Гость", role: "guest" };
+    if (req.path === "/add") {
+      return res.redirect("/login");
+    }
+    next();
   }
-
-  res.json(episode);
 });
 
-// POST /episodes — Добавление нового эпизода (Загрузка эпизода)
-app.post('/episodes', (req, res) => {
-  const { title, podcastName, durationMinutes, audioUrl } = req.body;
+// ==========================================
+// МАРШРУТЫ EJS (Веб-интерфейс)
+// ==========================================
 
-  // Валидация входных данных
-  if (!title || !podcastName || !durationMinutes || !audioUrl) {
-    return res.status(400).json({ 
-      error: "Обязательные поля: title, podcastName, durationMinutes, audioUrl" 
+// GET / -> Главная страница
+app.get("/", async (req, res, next) => {
+  try {
+    const episodes = await Episode.findAll({ order: [["id", "ASC"]] });
+    res.render("index", {
+      title: "Платформа подкастов — Главная",
+      episodes,
+      user: req.user,
     });
+  } catch (err) {
+    next(err);
   }
-
-  const newEpisode = {
-    id: nextEpisodeId++,
-    title,
-    podcastName,
-    durationMinutes: Number(durationMinutes),
-    audioUrl,
-    playsCount: 0
-  };
-
-  episodes.push(newEpisode);
-  res.status(201).json(newEpisode);
 });
 
-// PUT /episodes/:id — Полное обновление эпизода
-app.put('/episodes/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const episodeIndex = episodes.findIndex(ep => ep.id === id);
+// GET /login -> Страница входа
+app.get("/login", (req, res) => {
+  res.render("login", {
+    title: "Авторизация",
+    user: req.user,
+  });
+});
 
-  if (episodeIndex === -1) {
-    return res.status(404).json({ error: "Эпизод для обновления не найден" });
-  }
+// GET /add -> Форма добавления
+app.get("/add", (req, res) => {
+  res.render("add", {
+    title: "Добавить новый эпизод",
+    user: req.user,
+  });
+});
 
-  const { title, podcastName, durationMinutes, audioUrl } = req.body;
+// POST /add -> Обработка формы
+app.post("/add", async (req, res, next) => {
+  try {
+    const { title, podcastName, durationMinutes, audioUrl, description, isExplicit } = req.body;
 
-  if (!title || !podcastName || !durationMinutes || !audioUrl) {
-    return res.status(400).json({ 
-      error: "Все поля (title, podcastName, durationMinutes, audioUrl) обязательны для обновления" 
+    await Episode.create({
+      title: title || "Без названия",
+      podcastName: podcastName || "Неизвестный подкаст",
+      durationMinutes: Number(durationMinutes) || 0,
+      audioUrl: audioUrl || "",
+      playsCount: 0,
+      description: description || "Описание отсутствует.",
+      isExplicit: isExplicit === "on" || isExplicit === true,
     });
+
+    const authQuery = req.user.role === "admin" ? "?auth=1" : "";
+    res.redirect("/" + authQuery);
+  } catch (err) {
+    next(err);
   }
-
-  episodes[episodeIndex] = {
-    id,
-    title,
-    podcastName,
-    durationMinutes: Number(durationMinutes),
-    audioUrl,
-    playsCount: episodes[episodeIndex].playsCount
-  };
-
-  res.json(episodes[episodeIndex]);
 });
 
-// DELETE /episodes/:id — Удаление эпизода
-app.delete('/episodes/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const episodeIndex = episodes.findIndex(ep => ep.id === id);
+// GET /item/:id -> Просмотр отдельного эпизода
+app.get("/item/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const episode = await Episode.findByPk(id);
 
-  if (episodeIndex === -1) {
-    return res.status(404).json({ error: "Эпизод для удаления не найден" });
+    if (!episode) {
+      return next(); // Переход к 404
+    }
+
+    res.render("item", {
+      title: `Эпизод: ${episode.title}`,
+      episode,
+      user: req.user,
+    });
+  } catch (err) {
+    next(err);
   }
-
-  const deletedEpisode = episodes.splice(episodeIndex, 1);
-  res.json({ message: "Эпизод успешно удален", episode: deletedEpisode[0] });
-});
-
-// POST /episodes/:id/listen — Имитация прослушивания эпизода (увеличение счетчика)
-app.post('/episodes/:id/listen', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const episode = episodes.find(ep => ep.id === id);
-
-  if (!episode) {
-    return res.status(404).json({ error: "Эпизод не найден" });
-  }
-
-  episode.playsCount += 1;
-  res.json({ message: "Воспроизведение начато", playsCount: episode.playsCount });
 });
 
 // ==========================================
-// МАРШРУТЫ ДЛЯ ПОДПИСОК (SUBSCRIPTIONS)
+// REST API МАРШРУТЫ (Эпизоды через Sequelize)
 // ==========================================
 
-// GET /subscriptions — Список подписок пользователя
-app.get('/subscriptions', (req, res) => {
-  res.json(subscriptions);
+// READ ALL
+app.get("/episodes", async (req, res, next) => {
+  try {
+    const episodes = await Episode.findAll({ order: [["id", "ASC"]] });
+    res.json(episodes);
+  } catch (err) {
+    next(err);
+  }
 });
 
-// POST /subscriptions — Оформить подписку на подкаст
-app.post('/subscriptions', (req, res) => {
-  const { podcastName } = req.body;
+// READ ONE
+app.get("/episodes/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const episode = await Episode.findByPk(id);
 
-  if (!podcastName) {
-    return res.status(400).json({ error: "Укажите название подкаста (podcastName)" });
+    if (!episode) {
+      return res.status(404).json({ error: "Эпизод с указанным ID не найден" });
+    }
+
+    res.json(episode);
+  } catch (err) {
+    next(err);
   }
+});
 
-  const newSub = {
-    id: nextSubscriptionId++,
-    podcastName,
-    subscribedAt: new Date().toISOString()
-  };
+// CREATE
+app.post("/episodes", async (req, res, next) => {
+  try {
+    const { title, podcastName, durationMinutes, audioUrl, description, isExplicit } = req.body;
 
-  subscriptions.push(newSub);
-  res.status(201).json(newSub);
+    if (!title || !podcastName || !durationMinutes || !audioUrl) {
+      return res.status(400).json({
+        error: "Обязательные поля: title, podcastName, durationMinutes, audioUrl",
+      });
+    }
+
+    const newEpisode = await Episode.create({
+      title,
+      podcastName,
+      durationMinutes: Number(durationMinutes),
+      audioUrl,
+      playsCount: 0,
+      description: description || "Добавлено через REST API",
+      isExplicit: Boolean(isExplicit),
+    });
+
+    res.status(201).json(newEpisode);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// UPDATE
+app.put("/episodes/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { title, podcastName, durationMinutes, audioUrl, description, isExplicit } = req.body;
+
+    const episode = await Episode.findByPk(id);
+    if (!episode) {
+      return res.status(404).json({ error: "Эпизод для обновления не найден" });
+    }
+
+    if (!title || !podcastName || !durationMinutes || !audioUrl) {
+      return res.status(400).json({
+        error: "Все поля (title, podcastName, durationMinutes, audioUrl) обязательны для обновления",
+      });
+    }
+
+    await episode.update({
+      title,
+      podcastName,
+      durationMinutes: Number(durationMinutes),
+      audioUrl,
+      description: description !== undefined ? description : episode.description,
+      isExplicit: isExplicit !== undefined ? Boolean(isExplicit) : episode.isExplicit,
+    });
+
+    res.json(episode);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE
+app.delete("/episodes/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const episode = await Episode.findByPk(id);
+
+    if (!episode) {
+      return res.status(404).json({ error: "Эпизод для удаления не найден" });
+    }
+
+    await episode.destroy();
+    res.json({ message: "Эпизод успешно удален", episode });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Увеличение счетчика прослушиваний
+app.post("/episodes/:id/listen", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const episode = await Episode.findByPk(id);
+
+    if (!episode) {
+      return res.status(404).json({ error: "Эпизод не найден" });
+    }
+
+    await episode.increment("playsCount", { by: 1 });
+    await episode.reload();
+
+    res.json({ message: "Воспроизведение начато", playsCount: episode.playsCount });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ==========================================
+// REST API МАРШРУТЫ (Подписки через Sequelize)
+// ==========================================
+
+// READ ALL SUBSCRIPTIONS
+app.get("/subscriptions", async (req, res, next) => {
+  try {
+    const subscriptions = await Subscription.findAll({ order: [["id", "ASC"]] });
+    res.json(subscriptions);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// CREATE SUBSCRIPTION
+app.post("/subscriptions", async (req, res, next) => {
+  try {
+    const { podcastName } = req.body;
+
+    if (!podcastName) {
+      return res.status(400).json({ error: "Укажите название подкаста (podcastName)" });
+    }
+
+    const newSub = await Subscription.create({
+      podcastName,
+      subscribedAt: new Date(),
+    });
+
+    res.status(201).json(newSub);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE SUBSCRIPTION
+app.delete("/subscriptions/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const sub = await Subscription.findByPk(id);
+
+    if (!sub) {
+      return res.status(404).json({ error: "Подписка не найдена" });
+    }
+
+    await sub.destroy();
+    res.json({ message: "Подписка успешно удалена", subscription: sub });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ==========================================
 // ОБРАБОТКА ОШИБОК
 // ==========================================
 
-// 404 для неизвестных маршрутов
 app.use((req, res) => {
-  res.status(404).json({ error: "Запрашиваемый эндпоинт не существует" });
+  res.status(404).render("404", {
+    title: "Страница не найдена",
+    user: req.user,
+    url: req.originalUrl,
+  });
 });
 
-// Глобальный обработчик ошибок (Error-handling middleware)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Внутренняя ошибка сервера" });
+  console.error("Критическая ошибка:", err.stack);
+  res.status(500).render("500", {
+    title: "Ошибка сервера",
+    user: req.user,
+    error: err.message,
+  });
 });
 
+// ==========================================
+// ЗАПУСК СЕРВЕРА
+// ==========================================
+
+async function startServer() {
+  try {
+    await sequelize.authenticate();
+    console.log("Соединение с БД PostgreSQL успешно установлено.");
+
+    app.listen(PORT, () => {
+      console.log(`Сервер запущен на http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Не удалось подключиться к базе данных:", error);
+  }
+}
+
+startServer();

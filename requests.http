@@ -1,10 +1,13 @@
-### 1. Получить все эпизоды
+### 
 GET http://localhost:3000/episodes
 
-### 2. Получить эпизод по ID
+### 
 GET http://localhost:3000/episodes/2
 
-### 3. Создать новый эпизод (загрузка)
+### 
+GET http://localhost:3000/episodes/10
+
+### 
 POST http://localhost:3000/episodes
 Content-Type: application/json
 
@@ -15,7 +18,7 @@ Content-Type: application/json
   "audioUrl": "https://example.com/audio/ep3.mp3"
 }
 
-### 4. Обновить эпизод
+### 
 PUT http://localhost:3000/episodes/2
 Content-Type: application/json
 
@@ -26,5 +29,19 @@ Content-Type: application/json
   "audioUrl": "https://example.com/audio/ep1_v2.mp3"
 }
 
-### 5. Удалить эпизод
+### 
+PUT http://localhost:3000/episodes/2
+Content-Type: application/json
+
+{
+  "title": "Пока не поздно",
+  "durationMinutes": 50,
+  "audioUrl": "https://example.com/audio/ep1_v2.mp3"
+}
+
+### 
 DELETE http://localhost:3000/episodes/3
+
+### 
+DELETE http://localhost:3000/episodes/4
+
