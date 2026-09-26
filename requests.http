@@ -12,10 +12,13 @@ POST http://localhost:3000/episodes
 Content-Type: application/json
 
 {
-  "title": "Новый эпизод про AI",
-  "podcastName": "IT Шум",
-  "durationMinutes": 35,
-  "audioUrl": "https://example.com/audio/ep3.mp3"
+ "title": "Пока не поздно",
+ 	 "podcastName": "IT Шум",
+  	"durationMinutes": 45,
+  	"audioUrl": "https://example.com/audio/test2.mp3",
+  	"description": "Новости в IT в этом месяце",
+ 	 "isExplicit": false
+
 }
 
 ### 
@@ -23,12 +26,13 @@ PUT http://localhost:3000/episodes/2
 Content-Type: application/json
 
 {
-  "title": "Пока не поздно",
-  "podcastName": "IT Шум",
+  "title": "Введение в UX/Ui",
+  "podcastName": "Tech Podcast v2",
   "durationMinutes": 50,
-  "audioUrl": "https://example.com/audio/ep1_v2.mp3"
+  "audioUrl": "https://example.com/audio/test-updated.mp3",
+  "description": "Обновленное описание",
+  "isExplicit": true
 }
-
 ### 
 PUT http://localhost:3000/episodes/2
 Content-Type: application/json

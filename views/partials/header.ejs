@@ -19,19 +19,19 @@
   </style>
 </head>
 <body>
-  <% const authQuery = user && user.role === 'admin' ? '?auth=1' : ''; %>
 
   <nav>
     <div>
-      <a href="/<%= authQuery %>">Главная</a>
-      <a href="/add<%= authQuery %>">Добавить эпизод</a>
+      <a href="/">Главная</a>
+      <a href="/add">Добавить эпизод</a>
     </div>
 
     <span class="auth-info">
-      Пользователь: <strong><%= user ? user.name : 'Гость' %></strong>
-      <% if (user && user.role === 'admin') { %>
-        | <a href="/" style="color: #ffc107;">Выйти</a>
+      <% if (user && user.role && user.role !== 'guest') { %>
+        Пользователь: <strong><%= user.email || user.name || 'Авторизован' %></strong> (<%= user.role %>)
+        | <a href="/logout" style="color: #ffc107;">Выйти</a>
       <% } else { %>
+        Пользователь: <strong>Гость</strong>
         | <a href="/login" style="color: #ffc107;">Войти</a>
       <% } %>
     </span>

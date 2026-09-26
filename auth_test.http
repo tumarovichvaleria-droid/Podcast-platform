@@ -1,0 +1,102 @@
+### 1. Регистрация обычного пользователя (role: user)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "listener@podcast.com",
+  "password": "UserPass123"
+}
+
+### 1.1 Регистрация обычного пользователя (role: user)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "listener2@podcast.com",
+  "password": "UserPass1234"
+}
+
+
+### 2. Регистрация Администратора (role: admin)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@podcast.com",
+  "password": "AdminPass123",
+  "role": "admin"
+}
+
+### 2.2 Регистрация Администратора (role: admin)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin2@podcast.com",
+  "password": "AdminPass1234",
+  "role": "admin"
+}
+
+
+### 3. Тест блокировки: Вход с неверным паролем 5 раз подряд
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "listener@podcast.com",
+  "password": "WRONG_PASSWORD"
+}
+
+
+### 4. Успешный вход под ролью 'user'
+# @name loginUser
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "listener@podcast.com",
+  "password": "UserPass123"
+}
+
+
+### 5. Успешный вход под ролью 'admin'
+# @name loginAdmin
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@podcast.com",
+  "password": "AdminPass123"
+}
+
+
+### 6. Просмотр своего профиля по токену
+GET http://localhost:3000/profile
+Authorization: Bearer {{loginUser.response.body.token}}
+
+
+
+### 7. Попытка добавить эпизод обычным пользователем (Ошибка 403 Forbidden)
+POST http://localhost:3000/episodes
+Authorization: Bearer {{loginUser.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "Несанкционированный эпизод",
+  "podcastName": "Test",
+  "durationMinutes": 10,
+  "audioUrl": "https://example.com/audio.mp3"
+}
+
+
+### 8. Добавление эпизода Администратором (Успешно 201 Created)
+POST http://localhost:3000/episodes
+Authorization: Bearer {{loginAdmin.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "SAP News",
+  "podcastName": "IT Global News",
+  "durationMinutes": 45,
+  "audioUrl": "https://example.com/audio/ep-1.mp3"
+}

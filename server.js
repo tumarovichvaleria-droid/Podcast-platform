@@ -2,9 +2,13 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-
+const jwt = require("jsonwebtoken"); // <-- Переверьте наличие этой строки вверху server.js
 // Импортируем модели Sequelize
-const { Episode, Subscription, sequelize } = require("./models");
+const { Episode, Subscription, User, sequelize } = require("./models");
+
+// Импортируем маршруты аутентификации и middleware защиты
+const authRoutes = require("./routes/auth");
+const { authenticateToken, isAdmin } = require("./middleware/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,9 +18,33 @@ const logFilePath = path.join(__dirname, "server.log");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Встроенные middleware
+// Раздача статических файлов
+app.use(express.static(path.join(__dirname, "public")));
+
+// Встроенные middleware для парсинга JSON и URL-encoded
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
+// Мидлвар для автоматического извлечения пользователя из куки для EJS
+app.use((req, res, next) => {
+  const token = req.cookies.token;
+  if (token) {
+    jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key_podcast_platform_2026', (err, decoded) => {
+      if (!err) {
+        req.user = decoded;
+      } else {
+        req.user = { name: "Гость", role: "guest" };
+      }
+      next();
+    });
+  } else {
+    req.user = { name: "Гость", role: "guest" };
+    next();
+  }
+});
 
 // ==========================================
 // КАСТОМНЫЕ MIDDLEWARE
@@ -36,17 +64,35 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. Middleware авторизации
+// 2. Инициализация пользователя для EJS-шаблонов по умолчанию
 app.use((req, res, next) => {
-  if (req.query.auth === "1") {
-    req.user = { name: "Администратор", role: "admin" };
-    next();
-  } else {
-    req.user = { name: "Гость", role: "guest" };
-    if (req.path === "/add") {
-      return res.redirect("/login");
+  req.user = req.user || { name: "Гость", role: "guest" };
+  next();
+});
+
+// ==========================================
+// МАРШРУТЫ АУТЕНТИФИКАЦИИ
+// ==========================================
+
+app.use("/auth", authRoutes);
+
+// Protected Profile Endpoint
+app.get("/profile", authenticateToken, async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ["id", "email", "role", "createdAt"],
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Пользователь не найден" });
     }
-    next();
+
+    res.json({
+      message: "Данные профиля успешно получены",
+      user,
+    });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -76,8 +122,24 @@ app.get("/login", (req, res) => {
   });
 });
 
-// GET /add -> Форма добавления
+app.get("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.redirect("/");
+});
+
+// GET /add -> Форма добавления (только для авторизованных администраторов)
 app.get("/add", (req, res) => {
+  // 1. Если пользователь гость (не вошел)
+  if (!req.user || req.user.role === "guest") {
+    return res.status(401).send("Для доступа к этой странице необходимо авторизоваться.");
+  }
+
+  // 2. Если вошел обычный пользователь, но не админ
+  if (req.user.role !== "admin") {
+    return res.status(403).send("Отказ в доступе: требуются права администратора.");
+  }
+
+  // 3. Если это администратор — рендерим форму
   res.render("add", {
     title: "Добавить новый эпизод",
     user: req.user,
@@ -99,8 +161,7 @@ app.post("/add", async (req, res, next) => {
       isExplicit: isExplicit === "on" || isExplicit === true,
     });
 
-    const authQuery = req.user.role === "admin" ? "?auth=1" : "";
-    res.redirect("/" + authQuery);
+    res.redirect("/");
   } catch (err) {
     next(err);
   }
@@ -127,7 +188,7 @@ app.get("/item/:id", async (req, res, next) => {
 });
 
 // ==========================================
-// REST API МАРШРУТЫ (Эпизоды через Sequelize)
+// REST API МАРШРУТЫ (Эпизоды)
 // ==========================================
 
 // READ ALL
@@ -156,8 +217,8 @@ app.get("/episodes/:id", async (req, res, next) => {
   }
 });
 
-// CREATE
-app.post("/episodes", async (req, res, next) => {
+// CREATE (Защищено: Admin)
+app.post("/episodes", authenticateToken, isAdmin, async (req, res, next) => {
   try {
     const { title, podcastName, durationMinutes, audioUrl, description, isExplicit } = req.body;
 
@@ -183,8 +244,8 @@ app.post("/episodes", async (req, res, next) => {
   }
 });
 
-// UPDATE
-app.put("/episodes/:id", async (req, res, next) => {
+// UPDATE (Защищено: Admin)
+app.put("/episodes/:id", authenticateToken, isAdmin, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { title, podcastName, durationMinutes, audioUrl, description, isExplicit } = req.body;
@@ -215,8 +276,8 @@ app.put("/episodes/:id", async (req, res, next) => {
   }
 });
 
-// DELETE
-app.delete("/episodes/:id", async (req, res, next) => {
+// DELETE (Защищено: Admin)
+app.delete("/episodes/:id", authenticateToken, isAdmin, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const episode = await Episode.findByPk(id);
@@ -252,7 +313,7 @@ app.post("/episodes/:id/listen", async (req, res, next) => {
 });
 
 // ==========================================
-// REST API МАРШРУТЫ (Подписки через Sequelize)
+// REST API МАРШРУТЫ (Подписки)
 // ==========================================
 
 // READ ALL SUBSCRIPTIONS
@@ -265,8 +326,8 @@ app.get("/subscriptions", async (req, res, next) => {
   }
 });
 
-// CREATE SUBSCRIPTION
-app.post("/subscriptions", async (req, res, next) => {
+// CREATE SUBSCRIPTION (Защищено: Авторизованные пользователи)
+app.post("/subscriptions", authenticateToken, async (req, res, next) => {
   try {
     const { podcastName } = req.body;
 
@@ -285,8 +346,8 @@ app.post("/subscriptions", async (req, res, next) => {
   }
 });
 
-// DELETE SUBSCRIPTION
-app.delete("/subscriptions/:id", async (req, res, next) => {
+// DELETE SUBSCRIPTION (Защищено: Авторизованные пользователи)
+app.delete("/subscriptions/:id", authenticateToken, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const sub = await Subscription.findByPk(id);
@@ -303,10 +364,23 @@ app.delete("/subscriptions/:id", async (req, res, next) => {
 });
 
 // ==========================================
-// ОБРАБОТКА ОШИБОК
+// УМНАЯ ОБРАБОТКА 404 И 500 (API vs HTML)
 // ==========================================
 
+// 404 Handler
 app.use((req, res) => {
+  // Если запрос отправлен к API или ожидает JSON — возвращаем JSON 404
+  if (
+    req.originalUrl.startsWith("/auth") ||
+    req.originalUrl.startsWith("/episodes") ||
+    req.originalUrl.startsWith("/subscriptions") ||
+    req.originalUrl.startsWith("/profile") ||
+    req.headers["content-type"] === "application/json"
+  ) {
+    return res.status(404).json({ error: "Запрашиваемый API-эндпоинт не найден (404)" });
+  }
+
+  // Для обычных браузерных страниц рендерим EJS-шаблон
   res.status(404).render("404", {
     title: "Страница не найдена",
     user: req.user,
@@ -314,8 +388,20 @@ app.use((req, res) => {
   });
 });
 
+// 500 Handler (Критическая ошибка)
 app.use((err, req, res, next) => {
   console.error("Критическая ошибка:", err.stack);
+
+  if (
+    req.originalUrl.startsWith("/auth") ||
+    req.originalUrl.startsWith("/episodes") ||
+    req.originalUrl.startsWith("/subscriptions") ||
+    req.originalUrl.startsWith("/profile") ||
+    req.headers["content-type"] === "application/json"
+  ) {
+    return res.status(500).json({ error: "Внутренняя ошибка сервера", details: err.message });
+  }
+
   res.status(500).render("500", {
     title: "Ошибка сервера",
     user: req.user,

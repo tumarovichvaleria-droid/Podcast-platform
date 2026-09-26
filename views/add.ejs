@@ -1,33 +1,45 @@
 <%- include('partials/header') %>
 
-<h1>Добавление нового эпизода</h1>
+<main class="container" style="margin-top: 20px; max-width: 600px;">
+  <h1>Добавить новый эпизод</h1>
 
-<% if (locals.error) { %>
-  <div class="error"><%= error %></div>
-<% } %>
+  <form action="/add<%= user && user.role === 'admin' ? '?auth=1' : '' %>" method="POST" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+    <div>
+      <label style="display: block; margin-bottom: 5px;">Название эпизода:</label>
+      <input type="text" name="title" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
 
-<form action="/add?auth=1" method="POST" class="card">
-  <div>
-    <label for="title">Название выпуска*:</label>
-    <input type="text" id="title" name="title" required>
-  </div>
-  <div>
-    <label for="podcastName">Название подкаста*:</label>
-    <input type="text" id="podcastName" name="podcastName" required>
-  </div>
-  <div>
-    <label for="durationMinutes">Длительность (в минутах)*:</label>
-    <input type="number" id="durationMinutes" name="durationMinutes" required>
-  </div>
-  <div>
-    <label for="audioUrl">Ссылка на аудиофайл (MP3)*:</label>
-    <input type="text" id="audioUrl" name="audioUrl" placeholder="https://example.com/audio.mp3" required>
-  </div>
-  <div>
-    <label for="description">Описание:</label>
-    <textarea id="description" name="description" rows="4"></textarea>
-  </div>
-  <button type="submit" class="btn">Опубликовать эпизод</button>
-</form>
+    <div>
+      <label style="display: block; margin-bottom: 5px;">Название подкаста:</label>
+      <input type="text" name="podcastName" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div>
+      <label style="display: block; margin-bottom: 5px;">Длительность (в минутах):</label>
+      <input type="number" name="durationMinutes" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div>
+      <label style="display: block; margin-bottom: 5px;">Ссылка на аудиофайл (URL):</label>
+      <input type="url" name="audioUrl" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div>
+      <label style="display: block; margin-bottom: 5px;">Описание:</label>
+      <textarea name="description" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+    </div>
+
+    <div>
+      <label>
+        <input type="checkbox" name="isExplicit">
+        Контент 18+ (Explicit)
+      </label>
+    </div>
+
+    <button type="submit" style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+      Сохранить эпизод
+    </button>
+  </form>
+</main>
 
 <%- include('partials/footer') %>
