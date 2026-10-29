@@ -26,5 +26,9 @@ Content-Type: application/json
   "audioUrl": "https://example.com/audio/ep1_v2.mp3"
 }
 
-### 5. Удалить эпизод
+### 
 DELETE http://localhost:3000/episodes/3
+
+### 
+DELETE http://localhost:3000/episodes/8
+

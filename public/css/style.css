@@ -1,0 +1,137 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #f8f9fa;
+  color: #333333;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header {
+  background: linear-gradient(135deg, #8b56a6 0%, #5c2a79 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: fixed;   /* Фиксируем вверху */
+  top: 0;
+  left: 0;           /* Прижимаем к левому краю */
+  width: 100%;       /* Растягиваем на всю ширину экрана */
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+}
+
+nav {
+  max-width: 1000px;
+  width: 100%;       /* Добавлено, чтобы nav занимал всю доступную ширину контейнера */
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-link {
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Блок пользователя */
+.auth-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.btn-auth {
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-login {
+  background-color: #78d85b;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(45, 244, 88, 0.3);
+}
+
+.btn-login:hover {
+  background-color: #137a21;
+  transform: translateY(-1px);
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}
+
+/* Общий контейнер контента */
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 25px 20px;
+  padding-top: 90px;
+}
+
+/* Базовые стили для форм и карточек */
+.card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; border: 1px solid #eef0f2; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #7b17b4; color: white; border: none; border-radius: 8px; text-decoration: none; cursor: pointer; font-weight: 500; font-size: 14px; }
+.btn-danger { background: #dc3545; }
+.error { color: #d93025; margin-bottom: 12px; font-weight: 500; }
+form div { margin-bottom: 14px; }
+label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444; }
+input[type="text"], input[type="number"], textarea, input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, input[type="email"]:focus, input[type="password"]:focus { outline: none; border-color: #2563eb; }

@@ -1,17 +1,47 @@
 <%- include('partials/header') %>
 
-<div class="card">
-  <h1><%= episode.title %></h1>
-  <p><strong>Подкаст:</strong> <%= episode.podcastName %></p>
-  <p><strong>Длительность:</strong> <%= episode.durationMinutes %> минут</p>
-  <p><strong>Описание:</strong> <%= episode.description %></p>
+<main class="container" style="max-width: 720px; margin: 35px auto; padding: 0 15px;">
+  <div style="background: #ffffff; border: 1px solid #eef0f2; border-radius: 16px; padding: 30px; box-shadow: 0 6px 18px rgba(0,0,0,0.04);">
+    
+    
+    <span style="color: #0066ff; font-weight: 600; font-size: 14px; background: #eef4ff; padding: 4px 12px; border-radius: 20px;">
+      <%= episode.podcastName %>
+    </span>
 
-  <h3>Аудиоплеер:</h3>
-  <audio controls src="<%= episode.audioUrl %>" style="width: 100%; margin-bottom: 15px;"></audio>
+   
+    <h1 style="font-size: 26px; font-weight: 700; color: #1a1a1a; margin: 15px 0 20px 0;">
+      <%= episode.title %>
+    </h1>
 
-  <div>
-    <a href="/<%= user.isAuthenticated ? '?auth=1' : '' %>" class="btn">Назад к списку</a>
+    
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 25px;">
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #444;">
+         <strong>Длительность:</strong> <%= episode.durationMinutes %> минут
+      </div>
+    </div>
+
+    
+    <div style="margin-bottom: 25px;">
+      <h3 style="font-size: 16px; color: #333; margin-bottom: 8px;">Описание</h3>
+      <p style="color: #555; line-height: 1.6; font-size: 15px; margin: 0;"><%= episode.description %></p>
+    </div>
+
+   
+    <% if (episode.audioUrl) { %>
+      <div style="background: #f1f3f5; border-radius: 12px; padding: 15px; margin-top: 20px;">
+        <h3 style="font-size: 14px; color: #666; margin: 0 0 10px 0; font-weight: 600;">Аудиоплеер:</h3>
+        <audio controls src="<%= episode.audioUrl %>" style="width: 100%; display: block;"></audio>
+      </div>
+    <% } %>
+
+    <!-- Кнопка возврата с поддержкой флага авторизации -->
+    <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee;">
+      <a href="/<%= user && user.isAuthenticated ? '?auth=1' : '' %>" class="btn" style="display: inline-block; background: #f1f3f5; color: #495057; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none; transition: background 0.2s;">
+        ← Назад к списку
+      </a>
+    </div>
+
   </div>
-</div>
+</main>
 
 <%- include('partials/footer') %>

@@ -1,0 +1,129 @@
+### Переменные
+@baseUrl = http://localhost:3000/api/mongo/podcasts
+# 
+@podcastId = 6ae1efe69d2e306b64917697
+# 
+@episodeId = 6ae1f2ec9d2e306b649176a8
+
+### 1.
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "title": "NoSQL и MongoDB Atlas",
+  "description": "Подкаст о работе с документными БД в Node.js",
+  "author": "DevTeam",
+  "tags": ["nosql", "mongodb", "mongoose", "express"],
+  "episodes": [
+    {
+      "title": "Выпуск 1: Введение в Mongoose",
+      "durationMinutes": 25,
+      "playsCount": 10,
+      "description": "Разбор вложенных документов и Mongoose Schema",
+      "isExplicit": false
+    }
+  ]
+}
+
+###
+
+### 2. READ
+GET {{baseUrl}}
+
+###
+
+### 3. 
+POST {{baseUrl}}/{{podcastId}}/episodes
+Content-Type: application/json
+
+{
+  "title": "Выпуск 2: Продвинутая работа с массивами в NoSQL",
+  "durationMinutes": 40,
+  "playsCount": 0,
+  "description": "Учимся обновлять элементы внутри массива",
+  "isExplicit": false
+}
+
+###
+
+### 4.
+PUT {{baseUrl}}/{{podcastId}}/episodes/{{episodeId}}/inc-plays
+
+###
+
+### 5.
+PUT {{baseUrl}}/{{podcastId}}
+Content-Type: application/json
+
+{
+  "description": "Обновленное описание подкаста про NoSQL архитектуру"
+}
+
+###
+
+### 6. 
+DELETE {{baseUrl}}/{{podcastId}}
+
+
+### Добавление подкаста 2
+POST http://localhost:3000/api/mongo/podcasts
+Content-Type: application/json
+
+{
+  "title": "Backend & Beyond",
+  "description": "Разборы архитектуры, Node.js, PostgreSQL и NoSQL решений",
+  "author": "Валерия",
+  "tags": ["backend", "nodejs", "express", "databases"],
+  "episodes": [
+    {
+      "title": "Выпуск 1: Почему выбирают гибридные БД?",
+      "durationMinutes": 35,
+      "playsCount": 120,
+      "description": "Сравнение Sequelize и Mongoose в одном проекте",
+      "isExplicit": false
+    },
+    {
+      "title": "Выпуск 2: Оптимизация запросов и индексы",
+      "durationMinutes": 48,
+      "playsCount": 85,
+      "description": "Как ускорить работу MongoDB и PostgreSQL",
+      "isExplicit": false
+    }
+  ]
+}
+
+###
+
+### Добавление подкаста 3
+POST http://localhost:3000/api/mongo/podcasts
+Content-Type: application/json
+
+{
+  "title": "Код и Кофе",
+  "description": "Утренние новости из мира IT и разработки ПО",
+  "author": "Алексей",
+  "tags": ["it", "news", "ai", "career"],
+  "episodes": [
+    {
+      "title": "Выпуск 1: Тренды веб-разработки 2026",
+      "durationMinutes": 20,
+      "playsCount": 250,
+      "description": "Обзор новых фреймворков и инструментов",
+      "isExplicit": false
+    }
+  ]
+}
+
+###
+
+### Добавление подкаста 4
+POST http://localhost:3000/api/mongo/podcasts
+Content-Type: application/json
+
+{
+  "title": "UX Продукты",
+  "description": "Все о проектировании пользовательских интерфейсов и веб-приложений",
+  "author": "Елена",
+  "tags": ["design", "ux", "ui", "product"],
+  "episodes": []
+}
