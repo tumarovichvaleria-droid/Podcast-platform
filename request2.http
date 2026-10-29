@@ -1,0 +1,276 @@
+### Переменные окружения
+@baseUrl = http://localhost:3000
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbkBwb2RjYXN0LmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc5MzE5ODY3OSwiZXhwIjoxNzkzMjAyMjc5fQ.TjPyRgLJkKN0ib8ly0ZkCxzAOy2adeqO3Szl4tIrGHM
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsaXN0ZW5lckBwb2RjYXN0LmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzkzMTk4NjQyLCJleHAiOjE3OTMyMDIyNDJ9.pVBnzz5vZSJlOY35Qd_xyF0Mnahm9fs2TsKt3U9odrs
+###############################################
+# 1. ТЕСТИРОВАНИЕ ПОДКАСТОВ (/podcasts)
+###############################################
+
+### 1.1 Получить список всех подкастов
+GET {{baseUrl}}/podcasts
+
+### 1.2 Создать новый подкаст (Админ)
+# @name createPodcast
+POST {{baseUrl}}/podcasts
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "DevTalk1",
+  "description": "Разговоры о веб-разработке, архитектуре и веб-технологиях",
+  "author": "Команда DevTalk",
+  "coverUrl": "https://example.com/images/devtalk-cover.jpg"
+}
+
+### 1.2/1 Создать новый подкаст (Админ)
+# @name createPodcast
+POST {{baseUrl}}/podcasts
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+
+  "description": "Разговоры о веб-разработке, архитектуре и веб-технологиях",
+  "author": "Команда DevTalk",
+  "coverUrl": "https://example.com/images/devtalk-cover.jpg"
+}
+
+### Сохраняем ID созданного подкаста
+@createdPodcastId = {{createPodcast.response.body.id}}
+
+### 1.3 Получить подкаст по ID (включая связанные эпизоды)
+GET {{baseUrl}}/podcasts/{{createdPodcastId}}
+
+### 1.3/1 Получить подкаст по ID (включая связанные эпизоды)
+GET {{baseUrl}}/podcasts/3
+
+### 1.4 Полностью обновить подкаст (PUT)
+PUT {{baseUrl}}/podcasts/{{createdPodcastId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "DevTalk Pro",
+  "description": "Обновленное описание подкаста о профессиональной разработке",
+  "author": "DevTalk Team",
+  "coverUrl": "https://example.com/images/devtalk-pro-cover.jpg"
+}
+
+### 1.5 Частично обновить подкаст (PATCH)
+PATCH {{baseUrl}}/podcasts/{{createdPodcastId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "description": "Только частичное обновление описания через PATCH",
+  "coverUrl": "https://example.com/images/devtalk-new-cover.jpg"
+}
+
+
+###############################################
+# 2. ТЕСТИРОВАНИЕ ЭПИЗОДОВ (/episodes)
+###############################################
+
+### 2.1 Получить список всех эпизодов
+GET {{baseUrl}}/episodes
+
+### 2.2 Создать новый эпизод (Админ)
+# @name createEpisode
+POST {{baseUrl}}/episodes
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "Тестовый выпуск про REST Client",
+  "podcastName": "DevTalk Pro",
+  "durationMinutes": 35,
+  "audioUrl": "https://example.com/audio/test.mp3",
+  "description": "Тестирование API с помощью .http файлов",
+  "isExplicit": false
+}
+
+### 2.2/1 Создать новый эпизод (Админ)
+# @name createEpisode
+POST {{baseUrl}}/episodes
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "Тестовый выпуск про REST Client",
+  "podcastName": "DevTalk Pro",
+  "durationMinutes": 35,
+  "audioUrl": "https://example.com/audio/test.mp3",
+  "description": "Тестирование API с помощью .http файлов",
+  "isExplicit": false
+}
+
+### 2.2.1 Создать новый эпизод (Админ)
+# @name createEpisode
+POST {{baseUrl}}/episodes
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "Тестовый выпуск про REST Client",
+  "audioUrl": "https://example.com/audio/test.mp3",
+  "description": "Тестирование API с помощью .http файлов",
+  "isExplicit": false
+}
+
+### 2.2 Создать новый эпизод (Админ)
+# @name createEpisode
+POST {{baseUrl}}/episodes
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "Тестовый выпуск про REST Client",
+  "podcastName": "DevTalk Pro",
+  "durationMinutes": "сорок минут",
+  "audioUrl": "https://example.com/audio/test.mp3",
+  "description": "Тестирование API с помощью .http файлов",
+  "isExplicit": false
+}
+
+### Сохраняем ID созданного эпизода
+@createdEpisodeId = {{createEpisode.response.body.id}}
+
+### 2.3 Получить конкретный эпизод по ID
+GET {{baseUrl}}/episodes/{{createdEpisodeId}}
+
+### 2.4 Частично обновить эпизод (PATCH)
+PATCH {{baseUrl}}/episodes/{{createdEpisodeId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "title": "Обновленный тестовый выпуск",
+  "durationMinutes": 40
+}
+
+### 2.5 Зафиксировать прослушивание
+POST {{baseUrl}}/episodes/{{createdEpisodeId}}/listen
+
+### 2.6 Удалить эпизод
+DELETE {{baseUrl}}/episodes/{{createdEpisodeId}}
+Authorization: Bearer {{adminToken}}
+
+
+###############################################
+# 3. ТЕСТИРОВАНИЕ ПОДПИСОК (/subscriptions)
+###############################################
+
+### 3.1 Создать подписку на подкаст (Связь по podcastId!)
+# @name createSub
+POST {{baseUrl}}/subscriptions
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "podcastId": {{createdPodcastId}}
+}
+
+### 3.1/1 Создать подписку на подкаст (Связь по podcastId!)
+# @name createSub
+POST {{baseUrl}}/subscriptions
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "podcastId": 7
+}
+
+
+
+### Сохраняем ID подписки
+@createdSubId = {{createSub.response.body.id}}
+
+### 3.2 Получить список подписок (Обычный юзер видит свои, Админ — все)
+GET {{baseUrl}}/subscriptions
+Authorization: Bearer {{userToken}}
+
+### 3.2.1 Получить список подписок (Обычный юзер видит свои, Админ — все)
+GET {{baseUrl}}/subscriptions
+Authorization: Bearer {{adminToken}}
+
+### 3.3 Получить подписку по ID
+GET {{baseUrl}}/subscriptions/{{createdSubId}}
+Authorization: Bearer {{userToken}}
+
+### 3.4 Удалить подписку
+DELETE {{baseUrl}}/subscriptions/{{createdSubId}}
+Authorization: Bearer {{userToken}}
+
+
+
+###############################################
+# 4. ТЕСТИРОВАНИЕ ПОЛЬЗОВАТЕЛЕЙ (/users)
+###############################################
+
+### 4.1 Получить список пользователей (Админ)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### 4.2 Создать пользователя (Админ)
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "email": "test_user_example@example.com",
+  "password": "password123",
+  "role": "user"
+}
+
+### 4.2/1 Создать пользователя (Админ)
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "email": "test_user_example@example.com",
+  "password": "password123",
+  "role": "user"
+}
+
+### 4.2.1 Создать пользователя (Админ)
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "email": "listener@podcast.com",
+  "password": "password123",
+  "role": "user"
+}
+
+### Сохраняем ID пользователя
+@createdUserId = {{createUser.response.body.id}}
+
+### 4.3 Получить пользователя по ID
+GET {{baseUrl}}/users/{{createdUserId}}
+Authorization: Bearer {{adminToken}}
+
+### 4.4 Изменить роль пользователя (PATCH)
+PATCH {{baseUrl}}/users/{{createdUserId}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "role": "admin"
+}
+
+### 4.5 Удалить пользователя
+DELETE {{baseUrl}}/users/{{createdUserId}}
+Authorization: Bearer {{adminToken}}
+
+### 4.6 Удалить созданный подкаст (Зачистка тестовых данных)
+DELETE {{baseUrl}}/podcasts/{{createdPodcastId}}
+Authorization: Bearer {{adminToken}}
+
+### 4.6.1 Удалить созданный подкаст (Зачистка тестовых данных)
+DELETE {{baseUrl}}/podcasts/12
+Authorization: Bearer {{adminToken}}
